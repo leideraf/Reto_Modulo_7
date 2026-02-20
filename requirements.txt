@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+python-jose[cryptography]
+python-dotenv
+loguru
+streamlit
+requests
+psycopg2-binary
+passlib[argon2]
