@@ -63,3 +63,6 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xab in position 96: invalid
 2026-02-22 18:48:05,612 - INFO - root - Conexión a PostgreSQL establecida correctamente
 2026-02-22 18:48:06,212 - INFO - root - Base de datos inicializada correctamente
 2026-02-22 18:53:44,925 - INFO - root - Aplicación finalizando correctamente
+2026-02-22 19:34:19,750 - INFO - root - Conexión a PostgreSQL establecida correctamente
+2026-02-22 19:34:20,290 - INFO - root - Base de datos inicializada correctamente
+2026-02-22 19:42:53,666 - INFO - root - Aplicación finalizando correctamente
