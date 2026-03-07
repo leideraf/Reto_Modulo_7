@@ -1,144 +1,230 @@
-# Seguridad y Autenticación con JWT y Passlib
+# Seguridad en APIs con FastAPI: Autenticación con JWT y Passlib
 
----
-Este proyecto implementa un sistema de gestión de acceso a recursos protegidos permitIENDO a los usuarios registrarse, iniciar sesión y
-acceder a distintos recursos de la aplicación, siempre y cuando estén correctamente autenticados.
-La aplicación se encarga de validar la identidad del usuario mediante un token JWT, el cual se genera al iniciar sesión y
-se utiliza posteriormente para autorizar cada solicitud a la API.
+## Descripción del proyecto
 
-El objetivo del sistema es controlar el acceso a la información y a las rutas disponibles, garantizando que únicamente
-los usuarios autenticados puedan consumir los endpoints protegidos. Además, el proyecto incorpora un control de permisos basado en roles,
-lo que permite diferenciar entre usuarios normales y administradores, otorgando accesos específicos según el tipo de usuario.
+En el desarrollo de aplicaciones modernas es fundamental proteger el acceso a los recursos del sistema y garantizar que la información de los usuarios sea manejada de forma segura.
 
----
-## Flujo de autenticación
-### Registro de usuario (Register)
-El flujo comienza cuando un usuario decide crear una cuenta en el sistema.
+Este proyecto implementa un sistema de **autenticación y autorización basado en tokens JWT (JSON Web Tokens)** utilizando **FastAPI**, junto con **Passlib** para la gestión segura de contraseñas mediante hashing.
 
-- El usuario ingresa un nombre de usuario, una contraseña y un rol desde el cliente (Streamlit).
-- La información es enviada a la API a través del endpoint /register.
-- El backend valida que el nombre de usuario no exista previamente.
-- La contraseña ingresada nunca se almacena en texto plano: -Es procesada con Passlib (Argon2) para generar un hash seguro.
-- El usuario es almacenado en la base de datos con su contraseña hasheada y su estado activo.
+El objetivo es demostrar de forma práctica cómo se implementa un flujo completo de autenticación en una API moderna, incluyendo:
 
-Como resultado, el sistema registra al usuario de forma segura y deja la cuenta lista para ser utilizada en el proceso de autenticación.
+- Registro de usuarios
+- Inicio de sesión
+- Generación de tokens JWT
+- Validación de tokens para acceder a rutas protegidas
+- Manejo seguro de contraseñas mediante hashing
 
----
-### Inicio de sesión (Login)
-
-Una vez registrado, el usuario puede iniciar sesión en la aplicación.
-
-- El usuario ingresa su nombre de usuario y contraseña.
-- Los datos se envían al endpoint /login.
-- El sistema busca el usuario en la base de datos.
-- La contraseña ingresada es comparada con el hash almacenado mediante Passlib.
-- Si las credenciales son válidas y el usuario está activo:
-- Se genera un token JWT.
-- El token incluye información relevante como:
-     - El identificador del usuario (sub).
-     - El rol del usuario (role).
-     - La fecha de expiración (exp).
-
-El token JWT es retornado al cliente y representa la sesión activa del usuario dentro del sistema.
-
----
-### Verificación del token y acceso a recursos protegidos
-
-Para acceder a rutas protegidas, el sistema utiliza el token JWT como mecanismo de verificación.
-
-- El cliente envía el token en cada solicitud HTTP dentro del encabezado: Authorization: Bearer <token>
-- La API intercepta la solicitud y extrae el token.
-- El token es decodificado y validado:
-  - Se verifica que la firma sea válida.
-  - Se comprueba que el token no esté expirado.
-- A partir del contenido del token, el sistema identifica al usuario.
-- Se valida que el usuario exista y que se encuentre activo.
-- Si todo es correcto, el acceso al recurso es concedido.
-
-En el caso de rutas con restricciones adicionales (por ejemplo, solo administradores), el sistema valida también el rol del usuario, permitiendo o denegando el acceso según corresponda.
+Este tipo de arquitectura es ampliamente utilizada en aplicaciones web modernas y microservicios.
 
 ---
 
-### Descripción del uso de Passlib
+# Tecnologías utilizadas
 
-(hashing y verificación de contraseñas)
+El proyecto fue desarrollado utilizando las siguientes tecnologías:
 
-En este proyecto, Passlib se utiliza como la herramienta principal para proteger las contraseñas de los usuarios durante los procesos de registro e inicio de sesión. Su uso se integra de forma clara y controlada en el flujo de autenticación del sistema.
+- **Python**
+- **FastAPI** – Framework moderno para construcción de APIs
+- **Passlib** – Librería para hashing seguro de contraseñas
+- **JWT (JSON Web Tokens)** – Sistema de autenticación basado en tokens
+- **Uvicorn** – Servidor ASGI para ejecutar la aplicación
+- **Streamlit / Postman** – Cliente para probar las peticiones
+- **Pydantic** – Validación de datos
+- **Python-dotenv** – Manejo de variables de entorno
 
-- El archivo de autenticación (auth_service.py), se configura Passlib creando un CryptContext con el algoritmo Argon2.
-- define el contexto y las funciones reutilizables. pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
- - Esto asegura que todo el sistema use un único estándar de hashing.
-- Cuando el usuario se registra desde el cliente (Streamlit), la API recibe un username y password por el endpoint /register.
-- El sistema valida que el usuario no exista.
-- Llama a hashear_password(password) (Passlib).
-- Guarda en base de datos solo el hash, no la contraseña original.
-- La base de datos nunca recibe la contraseña real; solo almacena un hash seguro.
-- Cuando el usuario inicia sesión por /login, el sistema:
-  - Busca el usuario en la base de datos.
-  - Recupera hashed_password.
-  - Usa verificar_password(plain, hashed) para comprobar si la contraseña ingresada coincide con el hash.
-- No se “desencripta” nada. Passlib hace una validación segura comparando el texto ingresado contra el hash almacenado
+---
 
-### Resultado
-- Las contraseñas no se guardan en texto plano.
-- El sistema puede autenticar usuarios sin revelar información sensible.
-- Si alguien accede a la base de datos, no obtiene contraseñas reales, solo hashes irreversibles.
+# Estructura del proyecto
 
-### Ejemplo del payload JWT generado y su decodificación
+El repositorio está organizado de forma modular siguiendo buenas prácticas de desarrollo.
+```python
+src/
+│
+├── main.py                # Punto de entrada de la aplicación FastAPI
+│
+├── auth/                  # Lógica de autenticación
+│   ├── auth_handler.py    # Manejo de tokens JWT y seguridad
+│   ├── auth_service.py    # Lógica de login y registro de usuarios
+│   └── dependencies.py    # Dependencias para autenticación y protección de rutas
+│
+├── core/                  # Configuración central del sistema
+│   ├── config.py          # Variables de configuración y entorno
+│   ├── database.py        # Conexión a la base de datos
+│   └── logger.py          # Configuración del sistema de logs
+│
+├── models/                # Modelos de base de datos
+│   └── user_model.py      # Modelo de usuario
+│
+├── routes/                # Endpoints de la API
+│   └── user_routes.py     # Rutas relacionadas con usuarios
+│
+├── schemas/               # Esquemas de validación con Pydantic
+│   └── user_schemas.py    # Esquemas de entrada y salida de usuarios
+│
+├── logs/                  # Archivos de registro generados por la aplicación
+│
+├── streamlit_app.py       # Cliente simple para interactuar con la API
+│
+├── requirements.txt       # Dependencias del proyecto
+│
+├── .env                   # Variables de entorno (no debe subirse al repositorio)
+│
+└── README.md              # Documentación del proyecto
+```
 
-En este proyecto, el token JWT se utiliza como el mecanismo principal para mantener la sesión del usuario y autorizar el acceso a los recursos protegidos. El token se genera durante el proceso de inicio de sesión y posteriormente es validado en cada solicitud a la API.
+---
 
-1. Cuando un usuario inicia sesión correctamente en el endpoint /login, el sistema genera un token JWT utilizando la función crear_token.
+# Flujo de autenticación
+
+El sistema implementa un flujo de autenticación basado en **JWT**, el cual permite manejar sesiones de usuario sin necesidad de mantener estado en el servidor.
+
+El flujo se compone de tres etapas principales:
+
+- Registro de usuario
+- Inicio de sesión
+- Verificación del token para acceder a recursos protegidos
+
+---
+
+## Registro de usuario
+
+El proceso de registro permite crear nuevas cuentas dentro del sistema.
+
+Flujo del proceso:
+
+1. El cliente envía `username` y `password` al endpoint `/register`.
+2. El backend valida que el usuario no exista previamente.
+3. La contraseña es procesada utilizando **Passlib con el algoritmo Argon2**.
+4. Se genera un **hash seguro de la contraseña**.
+5. El sistema almacena en la base de datos:
+   - username
+   - hashed_password
+   - estado del usuario
+
+Es importante destacar que **la contraseña nunca se almacena en texto plano**.
+
+Esto protege la información del usuario incluso si la base de datos fuera comprometida.
+
+---
+
+## Inicio de sesión (Login)
+
+Una vez registrado, el usuario puede autenticarse en el sistema.
+
+Flujo del login:
+
+1. El cliente envía `username` y `password` al endpoint `/login`.
+2. El sistema busca el usuario en la base de datos.
+3. La contraseña ingresada es comparada con el **hash almacenado** utilizando Passlib.
+4. Si las credenciales son válidas, el sistema genera un **token JWT**.
+
+Este token será utilizado por el cliente para acceder a los recursos protegidos de la API.
+
+---
+
+## Verificación del token y acceso a rutas protegidas
+
+Para acceder a rutas protegidas, el cliente debe enviar el token JWT en cada solicitud.
+
+Ejemplo del header de autorización:
+
+Authorization: Bearer <token>
+
+Cuando el backend recibe la solicitud:
+
+1. Extrae el token del header.
+2. Decodifica el token.
+3. Verifica que la firma sea válida.
+4. Comprueba que el token no esté expirado.
+5. Identifica al usuario desde el contenido del token.
+
+Si todas las validaciones son correctas, el usuario obtiene acceso al recurso solicitado.
+
+---
+
+# Uso de Passlib para seguridad de contraseñas
+
+El proyecto utiliza **Passlib** como mecanismo de seguridad para proteger las contraseñas de los usuarios.
+
+Se configura un contexto de hashing utilizando el algoritmo **Argon2**, considerado uno de los métodos más seguros actualmente.
+
+Ejemplo de configuración:
 
 ```python
-token = crear_token({
-    "sub": user.username,
-    "role": user.role
-})
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 ```
-El payload del token incluye:
+Este contexto permite:
 
-- sub: identifica al usuario autenticado.
-- role: define el rol del usuario dentro del sistema.
-- exp: fecha de expiración del token (agregada automáticamente).
+- generar hashes de contraseñas
+- verificar contraseñas durante el login
+- Proceso de hashing
 
-2. Una vez creado, el contenido del token JWT (payload) tiene una estructura similar a la siguiente:
-   
+Durante el registro:
+
+- El usuario envía su contraseña al sistema.
+- La contraseña se transforma en un hash irreversible.
+- Solo el hash es almacenado en la base de datos.
+- Verificación de contraseña
+
+Durante el login:
+
+- El usuario envía su contraseña.
+- El sistema compara la contraseña ingresada con el hash almacenado.
+- Si coinciden, la autenticación es exitosa.
+- En ningún momento se desencripta la contraseña original.
+
+Ejemplo de Token JWT
+
+Cuando un usuario inicia sesión correctamente, el sistema genera un token JWT que contiene información del usuario autenticado.
+
+### Ejemplo de payload del token:
 ```python
 {
-  "sub": "juan_perez",
+  "sub": "usuario1",
   "role": "admin",
-  "exp": 1733854800
+  "exp": 1715620000
 }
 ```
+Descripción de los campos:
 
-Este payload permite al sistema identificar quién es el usuario, qué permisos tiene y hasta cuándo el token es válido.
+sub → identificador del usuario
+role → rol del usuario dentro del sistema
+exp → fecha de expiración del token
 
-3. Después del login, el cliente almacena el token y lo envía en cada petición a rutas protegidas usando el encabezado HTTP:
+Este token puede ser decodificado por el backend para identificar al usuario y validar su acceso a las rutas protegidas.
+
+### Ejemplo de uso de la API
+Registro de usuario
+
+Endpoint
+
+POST /register
 ```python
-Authorization: Bearer <token>
-```
-De esta forma, el token acompaña cada solicitud como prueba de autenticación.
+Body
 
-4. Cuando la API recibe una solicitud protegida:
- - Extrae el token del encabezado Authorization.
- - Llama a la función verificar_token.
- - Decodifica el token utilizando la clave secreta y el algoritmo configurado.
- - Valida la firma y la fecha de expiración.
- - Retorna el payload si el token es válido.
+{
+ "username": "usuario1",
+ "password": "password123"
+}
+Login
+```
+Endpoint
 ```python
-payload = verificar_token(token)
+POST /login
+
+Body
+
+{
+ "username": "usuario1",
+ "password": "password123"
+}
 ```
-Si el token es inválido o ha expirado, el acceso es denegado automáticamente.
-
-5. Una vez decodificado el token:
- - Se obtiene el valor de sub para identificar al usuario.
- - Se consulta la base de datos para validar que el usuario exista y esté activo.
- - Se usa el valor de role para restringir o permitir el acceso a ciertos recursos.
-
-Gracias a este proceso, el sistema garantiza que cada solicitud esté asociada a un usuario válido y autorizado.
-
----
+Respuesta
+```python
+{
+ "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+ "token_type": "bearer"
+}
+```
 
 ## Pasos para ejecutar y compilar el proyecto
 
@@ -206,3 +292,60 @@ Esto abre la interfaz gráfica en el navegador, desde donde se puede:
  - Probar rutas de administrador
 
 Siguiendo estos pasos, el proyecto queda completamente funcional, permitiendo probar de forma práctica el sistema de autenticación y autorización basado en JWT y Passlib.
+
+
+Video explicativo
+
+En el siguiente video se explica el funcionamiento del sistema, el flujo de autenticación y las medidas de seguridad implementadas.
+
+Enlace al video:
+
+https://youtube.com/tu_video
+
+### Buenas prácticas aplicadas
+
+Durante el desarrollo de este proyecto se aplicaron diversas buenas prácticas de seguridad y desarrollo:
+
+- Uso de hashing seguro de contraseñas
+- Autenticación basada en tokens JWT
+- Validación de entradas mediante Pydantic
+- Separación modular del código
+- Uso de variables de entorno para información sensible
+- Implementación de rutas protegidas
+
+Estas prácticas son utilizadas en sistemas reales para proteger la información de los usuarios.
+
+Conclusiones
+
+- El desarrollo de este proyecto permitió comprender la importancia de implementar mecanismos de seguridad en las aplicaciones backend.
+- Se pudo observar cómo herramientas como Passlib permiten proteger las contraseñas mediante hashing seguro, evitando almacenar información sensible en texto plano.
+- Asimismo, el uso de JWT facilita la gestión de autenticación en APIs modernas, permitiendo identificar a los usuarios mediante tokens firmados digitalmente.
+
+Este ejercicio permitió reforzar conceptos importantes relacionados con:
+
+- seguridad en aplicaciones web
+- autenticación basada en tokens
+- protección de credenciales
+- diseño de APIs seguras
+
+
+
+Autor
+
+Proyecto desarrollado como actividad académica del módulo de seguridad en APIs.
+
+Autor:
+Leider Arias Franco
+
+
+
+
+
+
+
+
+
+
+
+
+
