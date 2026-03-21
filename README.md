@@ -329,13 +329,13 @@ Este ejercicio permitió reforzar conceptos importantes relacionados con:
 - diseño de APIs seguras
 
 
+---
 
-Autor
 
-Proyecto desarrollado como actividad académica del módulo de seguridad en APIs.
-
-Autor:
-Leider Arias Franco
+- **Autor:** Leider Elian Arias Franco
+- **Programa:** Python
+- **Módulo:** Autenticación con JWT y Passlib
+- **Video:** https://youtu.be/cnepnqLYdAA
 
 
 
